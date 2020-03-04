@@ -20,9 +20,18 @@ for grb in grbs:
     print(grb)
     
 grb = grbs.select(name = 'Temperature')[0]
+
+###val확인
+val = grb.data()[0]
+lat = grb.data()[1]
+lon = grb.data()[2]
+
+data, lats, lons = grb.data(lat1=38,lat2=25,lon1=140,lon2=150)
 val = grb.values
-val.shape
-val = np.transpose(val)
-val = np.rot90(val)
+#val.shape
+#val = np.transpose(val)
+#val = np.rot90(val)
 
 plt.imshow(val)
+
+
