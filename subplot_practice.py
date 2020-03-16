@@ -51,6 +51,72 @@ for i in (range(len(DF))):
         print(ex)
 #%%
 dirname = "/Volumes/Samsung_T5/ldaps/201907"
+filenames = os.listdir(dirname)
+DF["file"] = np.empty(len(DF))
+DF["file"][:] = np.nan
+when_predict = {}
+
+for i in range(5,20):
+    when_predict[i] = 3*mt.floor(i/3)
+for i in range(len(DF)):
+    date = DF["date"][i]
+    hour = DF["hour"][i]
+    ahead = hour - when_predict[hour]
+    file_path = os.path.join(dirname,"l015v070erlounish0"+str(ahead).zfill(2)+"."+str(date)+str(when_predict[hour]).zfill(2)
+                             +".gb2")
+    
+    if os.path.isfile(file_path):
+        DF["file"][i] = "l015v070erlounish0"+str(ahead).zfill(2)+"."+str(date)+str(when_predict[hour]).zfill(2) +".gb2"
+        #%%
+predcit_hour = [0,3,6,9,12,15,18,21]
+for filename in filenames:
+    full_filename = os.path.join(dirname, filename)
+    if os.path.isdir(full_filename):
+        continue
+    else:
+        ext = os.path.splitext(full_filename)[-1]
+        ext2 = os.path.splitext(full_filename)[-2]
+        hours = int(ext2[-2:])
+        ext3 = ext2.split('.')[-2]
+        predict_hours = int(ext3[-2:])
+        
+        if not (hours ==0 or hours == 6):
+            continue
+        print("predcit : %d, hours : %d" %(predict_hours, hours))
+        if ext == '.gb2' and ((hours == 0 and predict_hours >16) or 
+                              (hours == 6 and predict_hours >9 and predict_hours <46 )): 
+            
+            
+            
+            grbs = pygrib.open(full_filename)  
+            grbs.seek(0)
+            
+            
+            image_save(grbs,filename)
+            
+            image_dir = os.path.join("/Users/ebrain/Desktop/grib_api-1.28.0-Source/image", filename )
+            if not os.path.isdir(image_dir):
+                
+                os.makedirs(image_dir)
+            
+            cnt = 1
+            for grb in grbs:
+                val = grb.data()[0]
+                lat = grb.data()[1]
+                lon = grb.data()[2]
+                val = np.transpose(val)
+                val = np.rot90(val)
+                m = val.min()
+                x = val.max()
+                val = (val-m)/(x-m)
+                image_path = os.path.join(image_dir, str(cnt)+'_'+grb.name + '.png')
+                plt.imshow(val)
+                plt.savefig(image_path,dpi=50 )
+                plt.close()
+                print(grb)
+                cnt = cnt+1
+            
+            print(full_filename)
 #%% plot_line
 def dot(a0,a1,a2,b0,b1,b2):
     return a0*b0+b1*a1+a2*b2
