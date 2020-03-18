@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
 #35.139238, 128.872537
+
+latlon_i_j = [207, 430]
+
+import time
 import math as mt
 import os
 import pygrib
@@ -68,7 +72,75 @@ for i in range(len(DF)):
     if os.path.isfile(file_path):
         DF["file"][i] = "l015v070erlounish0"+str(ahead).zfill(2)+"."+str(date)+str(when_predict[hour]).zfill(2) +".gb2"
         #%%
+def indexname(i):
+    return str(i).zfill(3)+"_"+lindex["Name"][i-1]
+indice = []
+
 predcit_hour = [0,3,6,9,12,15,18,21]
+dir_path = dirname
+lindex = pd.read_csv("/Users/ebrain/Desktop/grib_api-1.28.0-Source/ldaps_index.csv")
+
+for i in range(len(lindex)):
+    DF[str(i+1).zfill(3)+"_"+lindex["Name"][i]] = np.empty(len(DF))
+    DF[str(i+1).zfill(3)+"_"+lindex["Name"][i]][:] = np.nan
+    indice.append(indexname(i+1))
+import time
+
+for i in range(len(DF)):
+    start = time.time()
+    full_filename = os.path.join(dirname, DF["file"][i])
+    grbs = pygrib.open(full_filename)
+    grbs.seek(0)
+    temp = np.empty(len(lindex))
+    for e,grb in enumerate(grbs):
+        temp[e] = grb.data()[0][latlon_i_j[0], latlon_i_j[1]]
+        print(e/len(lindex))
+    DF[indice].loc[i]= temp[:]
+    
+    print("time : ", time.time() - start)
+    grbs.close
+    #%% 한칸씩 쓰기
+def indexname(i):
+    return str(i).zfill(3)+"_"+lindex["Name"][i-1]
+indice = []
+
+predcit_hour = [0,3,6,9,12,15,18,21]
+dir_path = dirname
+lindex = pd.read_csv("/Users/ebrain/Desktop/grib_api-1.28.0-Source/ldaps_index.csv")
+
+for i in range(len(lindex)):
+    DF[str(i+1).zfill(3)+"_"+lindex["Name"][i]] = np.empty(len(DF))
+    DF[str(i+1).zfill(3)+"_"+lindex["Name"][i]][:] = np.nan
+    indice.append(indexname(i+1))
+import time
+for i in range(len(DF)):
+    start = time.time()
+    full_filename = os.path.join(dirname, DF["file"][i])
+    grbs = pygrib.open(full_filename)
+    grbs.seek(0)
+    for e,grb in enumerate(grbs):
+        DF[indexname(e+1)][i] = grb.data()[0][latlon_i_j[0], latlon_i_j[1]]
+        
+    print("%d_time : %f" %(i+1,time.time() - start))
+    grbs.close
+
+DF.to_csv("./true_value.csv")
+#%%
+        val = grb.data()[0]
+        lat = grb.data()[1]
+        lon = grb.data()[2]
+        val = np.transpose(val)
+        val = np.rot90(val)
+        m = val.min()
+        x = val.max()
+        val = (val-m)/(x-m)
+        image_path = os.path.join(image_dir, str(cnt)+'_'+grb.name + '.png')
+        plt.imshow(val)
+        plt.savefig(image_path,dpi=50 )
+        plt.close()
+        print(grb)
+        cnt = cnt+1
+    
 for filename in filenames:
     full_filename = os.path.join(dirname, filename)
     if os.path.isdir(full_filename):
